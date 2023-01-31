@@ -37,13 +37,26 @@ func main() {
 }
 
 func matchLine(line []byte, pattern string) (bool, error) {
+	str := string(line)
 	switch {
+	case strings.EqualFold(pattern, "\\w"):
+		for _, item := range str {
+			if unicode.IsDigit(item) || unicode.IsLetter(item) {
+				return true, nil
+			}
+		}
+		return false, nil
 	case strings.EqualFold(pattern, "\\d"):
-		for _, item := range string(line) {
+		for _, item := range str {
 			if unicode.IsDigit(item){
 				return true, nil
 			}
 		}
+		return false, nil
+	case pattern[0] == '[' && pattern[len(pattern)-1] == ']':
+		return bytes.ContainsAny(line, pattern[1:len(pattern)-1]), nil
+	case pattern[:2] == "[^" && pattern[len(pattern)-1] == ']':
+		return !bytes.ContainsAny(line, pattern[2:len(pattern)-1]), nil
 	case utf8.RuneCountInString(pattern) == 1:
 		return bytes.ContainsAny(line, pattern), nil
 	}
